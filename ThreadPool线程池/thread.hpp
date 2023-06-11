@@ -42,7 +42,7 @@ public:
     }
 private:
     std::string name_;
-    pthread_t tid_;   // 线程id，是在pthread_create的时候才产生的
+    pthread_t tid_;   // 线程id，是在pthread_create的时候才使用的
     func_t func_;   // 线程执行例程函数
     ThreadData tdata_;  // 执行例程函数的参数
 };

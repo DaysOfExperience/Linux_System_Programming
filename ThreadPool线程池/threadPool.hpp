@@ -113,9 +113,9 @@ public:
 private:
     std::vector<Thread *> threads_;
     int thread_num_;
-    std::queue<T> task_queue_;
-    pthread_mutex_t mutex_;
-    pthread_cond_t cond_;
+    std::queue<T> task_queue_;     // 临界资源
+    pthread_mutex_t mutex_;        // 锁，保护队列临界资源
+    pthread_cond_t cond_;          // 条件变量，进行线程同步
 
     static ThreadPool<T> *thread_pool_ptr; // 单例模式指针
     static pthread_mutex_t mutex;
@@ -157,7 +157,7 @@ public:
     // 简单来说，不看封装，线程池内所有线程都会执行这个routine方法
     static void *routine(void *args)
     {
-        ThreadData *td = (ThreadData *)args;
+        ThreadData *td = (ThreadData *)args;    // 就包含一个线程名和线程池的this指针
         ThreadPool *tp = (ThreadPool *)td->args_;
         while (true)
         {
@@ -172,13 +172,14 @@ public:
             T task;
             {
                 // 临界区，临界资源是任务队列task_queue_
+                // 线程池内的所有线程竞争锁获取任务
                 lockGuard lockguard(&tp->mutex_);
                 while(tp->task_queue_.empty())    // 检测临界资源是否就绪，本身就是对临界资源的一种访问，故需要在加锁保护的情况下。
                     pthread_cond_wait(&tp->cond_, &tp->mutex_);
                 task = tp->task_queue_.front();
                 tp->task_queue_.pop();
             }
-            task(td->name_);  // 线程池执行任务时，不在临界区内，多线程并发执行！
+            task(td->name_);  // 线程池的线程执行任务时，不在临界区内，多线程并发执行！
         }
     }
     void pushTask(const T &task)
@@ -189,7 +190,7 @@ public:
 
         pthread_mutex_lock(&mutex);
         task_queue_.push(tesk);
-        pthread_cond_signal(&cond_);
+        pthread_cond_signal(&cond_);    // 线程同步，通知线程池线程有任务了
         pthread_mutex_unlock(&mutex);
     }
 public:
