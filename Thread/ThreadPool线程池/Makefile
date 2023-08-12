@@ -1,4 +1,4 @@
-thread_pool:testMain.cc
+thread_pool:main.cc
 	g++ -o $@ $^ -std=c++11 -lpthread
 
 .PHONY:clean

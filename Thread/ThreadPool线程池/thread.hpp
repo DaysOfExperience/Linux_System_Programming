@@ -1,3 +1,4 @@
+#pragma once
 // 封装一下线程，线程池里包含线程
 #include <functional>
 #include <string>
